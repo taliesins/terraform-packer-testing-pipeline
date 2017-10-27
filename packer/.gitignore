@@ -1,2 +1,6 @@
 # Ignore environent variables.
 .env
+
+# Ignore image version sentinel files.
+.image_version_to_use
+.first_run
