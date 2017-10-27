@@ -14,3 +14,8 @@ cookbook_file "/usr/share/nginx/html/index.html" do
   source 'index.html'
   mode '0644'
 end
+
+cookbook_file "/usr/share/goss/nginx_tests.yml" do
+  source "goss.yml"
+  mode "0644"
+end

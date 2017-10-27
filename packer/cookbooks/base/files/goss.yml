@@ -1,0 +1,10 @@
+---
+package:
+  unzip:
+    installed: true
+  tree:
+    installed: true
+  curl:
+    installed: true
+  jq:
+    installed: true

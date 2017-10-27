@@ -20,6 +20,8 @@
       "ami_virtualization_type": "hvm",
       "ssh_username": "centos",
       "ami_name": "centos-7-nginx-demo",
+      "force_deregister": true,
+      "force_delete_snapshot": true,
       "source_ami_filter": {
         "owners": ["410186602215"],
         "filters": {
@@ -35,13 +37,11 @@
     {
       "type": "chef-solo",
       "cookbook_paths": ["cookbooks"],
-      "run_list": ["base::default","consul::default","consul::client","nginx::default"]
-    }
-  ],
-  "post-processors": [
+      "run_list": ["base::default","nginx::default"]
+    },
     {
-      "type": "shell-local",
-      "inline": [ "echo 'This is an example of a post-processing step. The image has been built and provisioned by this point.' " ]
+      "type": "shell",
+      "inline": "find /usr/share/goss/*.yml | while read file; do goss -g $file validate; done"
     }
   ]
 }
