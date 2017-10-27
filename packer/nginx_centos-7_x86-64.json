@@ -5,7 +5,8 @@
     "aws_secret_key": null,
     "aws_region": null,
     "vpc_id": null,
-    "subnet_id": null
+    "subnet_id": null,
+    "image_version": null
   },
   "builders": [
     {
@@ -19,9 +20,7 @@
       "associate_public_ip_address": "true",
       "ami_virtualization_type": "hvm",
       "ssh_username": "centos",
-      "ami_name": "centos-7-nginx-demo",
-      "force_deregister": true,
-      "force_delete_snapshot": true,
+      "ami_name": "centos-7-nginx-demo-{{timestamp}}-{{ user `image_version` }}",
       "source_ami_filter": {
         "owners": ["410186602215"],
         "filters": {

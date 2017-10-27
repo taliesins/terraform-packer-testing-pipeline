@@ -16,11 +16,37 @@ REQUIRED_ENV_VARS := PACKER_TEMPLATE \
 	AWS_SUBNET_ID \
 	AWS_REGION \
 	AWS_SECRET_ACCESS_KEY \
-	AWS_ACCESS_KEY_ID
+	AWS_ACCESS_KEY_ID \
 
 # All of our binaries are run in Docker images for increased portability.
 # As such, we need to expose our environment variables to our containers.
 EXPOSED_DOCKER_ENV_VARS := $(foreach var,$(REQUIRED_ENV_VARS),-e $(var) )
+
+# Since we aren't using a manifest to retrieve the image ID, we need to
+# enumerate a list of our images in AWS.
+get_image_version:
+	if [ -f .first_run ]; \
+	then \
+		echo "0.0" > .image_version_to_use; \
+		rm .first_run; \
+		exit 0; \
+	fi; \
+	latest_version=$$(docker run -v $$PWD:/app -w /app -it $(EXPOSED_DOCKER_ENV_VARS) \
+		anigeo/awscli \
+		ec2 describe-images --owners self \
+			--output text \
+			--query "Images[*].Name" | \
+		rev | cut -f1 -d - | rev | \
+		sort -V | \
+		head -n 1); \
+	if [ -z "$$latest_version" ]; \
+	then \
+		echo "ERROR: Image version not found." >&2; \
+		exit 1; \
+	else \
+		next_image_version=$$(($$image_version+0.1)); \
+		echo "$$next_image_version" > .image_version_to_use; \
+	fi
 
 # This step ensures that our environment is ready to continue.
 # We use .PHONY markers to tell Make that these commands will not produce
@@ -46,11 +72,12 @@ validate:
 		-var "aws_secret_key=$(AWS_SECRET_ACCESS_KEY)" \
 		-var "vpc_id=$(AWS_VPC_ID)" \
 		-var "subnet_id=$(AWS_SUBNET_ID)" \
+		-var "image_version=$$(cat .image_version_to_use)" \
 		$(PACKER_TEMPLATE) >/dev/null
 
 # Build our template (after running tests).
 .PHONY: build
-build: init validate _build
+build: init get_image_version validate _build
 
 # Build our template!
 # Note that since we are using Goss to test that our cookbooks do what we want
@@ -67,4 +94,5 @@ _build:
 		-var "aws_secret_key=$(AWS_SECRET_ACCESS_KEY)" \
 		-var "vpc_id=$(AWS_VPC_ID)" \
 		-var "subnet_id=$(AWS_SUBNET_ID)" \
+		-var "image_version=$$(cat .image_version_to_use)" \
 		$(PACKER_TEMPLATE)
